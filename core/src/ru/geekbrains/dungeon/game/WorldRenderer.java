@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import ru.geekbrains.dungeon.helpers.Assets;
+import ru.geekbrains.dungeon.screens.ScreenManager;
 
 public class WorldRenderer {
     private GameController gc;
@@ -13,6 +14,7 @@ public class WorldRenderer {
     private TextureRegion cursorTexture;
     private BitmapFont font18;
     private BitmapFont font24;
+    private StringBuilder stringHelper;
 
     public WorldRenderer(GameController gc, SpriteBatch batch) {
         this.gc = gc;
@@ -20,6 +22,7 @@ public class WorldRenderer {
         this.cursorTexture = Assets.getInstance().getAtlas().findRegion("cursor");
         this.font18 = Assets.getInstance().getAssetManager().get("fonts/font18.ttf");
         this.font24 = Assets.getInstance().getAssetManager().get("fonts/font24.ttf");
+        this.stringHelper = new StringBuilder();
     }
 
     public void render() {
@@ -29,14 +32,22 @@ public class WorldRenderer {
         gc.getGameMap().render(batch);
         gc.getUnitController().render(batch, font18);
         gc.getProjectileController().render(batch);
+        gc.getGoldController().render(batch,font18);
         batch.setColor(1, 1, 1, 0.5f);
         batch.draw(cursorTexture, gc.getCursorX() * GameMap.CELL_SIZE, gc.getCursorY() * GameMap.CELL_SIZE);
         batch.setColor(1, 1, 1, 1);
+        batch.end();
 
-        font24.draw(batch, "Player: " + gc.getUnitController().getHero().getName(), 20, 680);
-        font24.draw(batch, "Money: " + gc.getUnitController().getHero().getMoney() + " gold(s)", 20, 650);
-        font24.draw(batch, "Round: " + gc.getUnitController().getRound(), 600, 680);
+        float camX = ScreenManager.getInstance().getCamera().position.x;
+        float camY = ScreenManager.getInstance().getCamera().position.y;
+        ScreenManager.getInstance().resetCamera();
+        batch.begin();
+        gc.getUnitController().getHero().renderHUD(batch, font24, 10, ScreenManager.WORLD_HEIGHT - 10);
+        font18.draw(batch, "Attack turns: " + gc.getUnitController().getCurrentUnit().attackTurns, 600, 630);
+        font18.draw(batch, "Turns: " + gc.getUnitController().getCurrentUnit().turns, 600, 600);
 
         batch.end();
+
+        ScreenManager.getInstance().pointCameraTo(camX, camY);
     }
 }

@@ -1,17 +1,19 @@
 package ru.geekbrains.dungeon.game;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import lombok.Data;
 import ru.geekbrains.dungeon.helpers.Assets;
 import ru.geekbrains.dungeon.game.GameController;
+import ru.geekbrains.dungeon.screens.ScreenManager;
 
 public class Hero extends Unit {
     private String name;
-    private int money;
 
     public Hero(GameController gc) {
         super(gc, 1, 1, 10);
-        this.name = "Sir Mullih";
-        this.money = 0;
+        this.name = "Sir Lancelot";
         this.hpMax = 100;
         this.hp = this.hpMax;
         this.texture = Assets.getInstance().getAtlas().findRegion("knight");
@@ -20,25 +22,28 @@ public class Hero extends Unit {
 
     public void update(float dt) {
         super.update(dt);
-        if (Gdx.input.justTouched() && canIMakeAction()) {
+        if (Gdx.input.justTouched() && canIMakeAction()  ) {
             Monster m = gc.getUnitController().getMonsterController().getMonsterInCell(gc.getCursorX(), gc.getCursorY());
-            if (m != null && canIAttackThisTarget(m)) {
+            if (m != null && canIAttackThisTarget(m) && attackTurns > 0) {
                 attack(m);
             } else {
                 goTo(gc.getCursorX(), gc.getCursorY());
             }
+        }else{
+            if(Gdx.input.justTouched() && attackTurns > 0){
+                Monster m = gc.getUnitController().getMonsterController().getMonsterInCell(gc.getCursorX(), gc.getCursorY());
+                if (m != null && canIAttackThisTarget(m)) {
+                    attack(m);
+                }
+            }
         }
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public int getMoney() {
-        return money;
-    }
-
-    public void setMoney(int money) {
-        this.money = money;
+    public void renderHUD(SpriteBatch batch, BitmapFont font, int x, int y) {
+        stringHelper.setLength(0);
+        stringHelper
+                .append("Player: ").append(name).append("\n")
+                .append("Gold: ").append(gold).append("\n");
+        font.draw(batch, stringHelper, x, y);
     }
 }

@@ -4,30 +4,20 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import ru.geekbrains.dungeon.helpers.ObjectPool;
 
-public class MonsterController extends ObjectPool<Monster> {
+public class GoldController extends ObjectPool<Gold> {
     private GameController gc;
 
-    public MonsterController(GameController gc) {
+    public GoldController(GameController gc) {
         this.gc = gc;
     }
 
     @Override
-    protected Monster newObject() {
-        return new Monster(gc);
+    protected Gold newObject() {
+        return new Gold(gc);
     }
 
-    public Monster activate(int cellX, int cellY) {
+    public Gold activate(int cellX, int cellY) {
         return getActiveElement().activate(cellX, cellY);
-    }
-
-    public Monster getMonsterInCell(int cellX, int cellY) {
-        for (int i = 0; i < getActiveList().size(); i++) {
-            Monster m = getActiveList().get(i);
-            if (m.getCellX() == cellX && m.getCellY() == cellY) {
-                return m;
-            }
-        }
-        return null;
     }
 
     public void update(float dt) {
@@ -42,4 +32,6 @@ public class MonsterController extends ObjectPool<Monster> {
             getActiveList().get(i).render(batch, font18);
         }
     }
+
+
 }

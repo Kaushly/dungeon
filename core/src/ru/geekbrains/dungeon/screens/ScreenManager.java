@@ -4,8 +4,8 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.utils.viewport.FitViewport;
-import com.badlogic.gdx.utils.viewport.Viewport;
+import com.badlogic.gdx.utils.Scaling;
+import com.badlogic.gdx.utils.viewport.*;
 import ru.geekbrains.dungeon.DungeonGame;
 import ru.geekbrains.dungeon.helpers.Assets;
 
@@ -19,8 +19,9 @@ public class ScreenManager {
     public static final int WORLD_HEIGHT = 720;
     public static final int HALF_WORLD_HEIGHT = WORLD_HEIGHT / 2;
 
-    private SpriteBatch batch;
     private DungeonGame game;
+    private SpriteBatch batch;
+
     private LoadingScreen loadingScreen;
     private GameScreen gameScreen;
 
@@ -61,6 +62,12 @@ public class ScreenManager {
 
     public void resetCamera() {
         camera.position.set(HALF_WORLD_WIDTH, HALF_WORLD_HEIGHT, 0);
+        camera.update();
+        batch.setProjectionMatrix(camera.combined);
+    }
+
+    public void pointCameraTo(float x, float y) {
+        camera.position.set(x, y, 0);
         camera.update();
         batch.setProjectionMatrix(camera.combined);
     }
