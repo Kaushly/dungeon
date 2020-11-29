@@ -1,19 +1,26 @@
-package ru.geekbrains.dungeon.game;
+package ru.geekbrains.dungeon.game.units;
 
 import com.badlogic.gdx.math.MathUtils;
+import ru.geekbrains.dungeon.game.Armor;
+import ru.geekbrains.dungeon.game.GameMap;
+import ru.geekbrains.dungeon.game.Weapon;
 import ru.geekbrains.dungeon.helpers.Assets;
 import ru.geekbrains.dungeon.game.GameController;
 import ru.geekbrains.dungeon.helpers.Utils;
 
 public class Monster extends Unit {
     private float aiBrainsImplseTime;
+    private float timeMove = 0.4f;
     private Unit target;
+    private boolean visible;
 
     public Monster(GameController gc) {
-        super(gc, 5, 2, 10);
-        this.texture = Assets.getInstance().getAtlas().findRegion("monster");
+        super(gc, 5, 2, 10, "Bomber");
         this.textureHp = Assets.getInstance().getAtlas().findRegion("hp");
-        this.hp = -1;
+        this.stats.hp = -1;
+        this.weapon = new Weapon(Weapon.Type.SWORD, 3, 1);
+        this.armor = new Armor(Armor.Type.ANTISWORD, 2, 1);
+
     }
 
     public Monster activate(int cellX, int cellY) {
@@ -21,37 +28,41 @@ public class Monster extends Unit {
         this.cellY = cellY;
         this.targetX = cellX;
         this.targetY = cellY;
-        this.hpMax = 10;
-        this.hp = hpMax;
+        this.stats.maxHp = 10;
+        this.stats.fullRestoreHp();
         this.target = gc.getUnitController().getHero();
         return this;
     }
 
     public void update(float dt) {
         super.update(dt);
-        if (turns == 0 && endOfTurn()) {
-            attackTurns = 0;
-        }else {
-            if (canIMakeAction() || canIAttackThisTarget(target)) {
-                if (isStayStill()) {
-                    aiBrainsImplseTime += dt;
-                }
-                if (aiBrainsImplseTime > 0.4f) {
-                    aiBrainsImplseTime = 0.0f;
-                    think(dt);
-                }
+        if(gc.getGameMap().isCellVisible(this.cellX, this.cellY)){
+            timeMove = 0.0f;
+        }
+        if (canIMakeAction()) {
+            if (isStayStill()) {
+                aiBrainsImplseTime += dt;
+            }
+            if (aiBrainsImplseTime > timeMove) {
+                aiBrainsImplseTime = 0.0f;
+                think(dt);
             }
         }
     }
 
     public void think(float dt) {
-        if (canIAttackThisTarget(target) && attackTurns > 0) {
+        if (canIAttackThisTarget(target, 1)) {
             attack(target);
+            if (stats.attackPoints == 0) {
+                stats.resetPoints();
+            }
             return;
         }
-
+        if (stats.movePoints == 0) {
+            stats.resetPoints();
+        }
         if (amIBlocked()) {
-            turns = 0;
+            stats.resetPoints();
             return;
         }
         if (Utils.getCellsIntDistance(cellX, cellY, target.getCellX(), target.getCellY()) < 5) {
@@ -65,8 +76,6 @@ public class Monster extends Unit {
             tryToMove(dx, dy);
         }
     }
-
-
 
     public void tryToMove(int preferedX, int preferedY) {
         int bestX = -1, bestY = -1;
@@ -83,6 +92,6 @@ public class Monster extends Unit {
                 }
             }
         }
-        goTo(bestX, bestY);
+        goTo(bestX, bestY, gc.getGameMap().costCell(bestX, bestY));
     }
 }

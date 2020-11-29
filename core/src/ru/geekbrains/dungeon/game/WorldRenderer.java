@@ -32,7 +32,6 @@ public class WorldRenderer {
         gc.getGameMap().render(batch);
         gc.getUnitController().render(batch, font18);
         gc.getProjectileController().render(batch);
-        gc.getGoldController().render(batch,font18);
         batch.setColor(1, 1, 1, 0.5f);
         batch.draw(cursorTexture, gc.getCursorX() * GameMap.CELL_SIZE, gc.getCursorY() * GameMap.CELL_SIZE);
         batch.setColor(1, 1, 1, 1);
@@ -43,9 +42,6 @@ public class WorldRenderer {
         ScreenManager.getInstance().resetCamera();
         batch.begin();
         gc.getUnitController().getHero().renderHUD(batch, font24, 10, ScreenManager.WORLD_HEIGHT - 10);
-        font18.draw(batch, "Attack turns: " + gc.getUnitController().getCurrentUnit().attackTurns, 600, 630);
-        font18.draw(batch, "Turns: " + gc.getUnitController().getCurrentUnit().turns, 600, 600);
-
         batch.end();
 
         ScreenManager.getInstance().pointCameraTo(camX, camY);

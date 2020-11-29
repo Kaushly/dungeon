@@ -2,6 +2,7 @@ package ru.geekbrains.dungeon.game;
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import ru.geekbrains.dungeon.game.units.Monster;
 import ru.geekbrains.dungeon.helpers.ObjectPool;
 
 public class MonsterController extends ObjectPool<Monster> {
@@ -39,7 +40,7 @@ public class MonsterController extends ObjectPool<Monster> {
 
     public void render(SpriteBatch batch, BitmapFont font18) {
         for (int i = 0; i < getActiveList().size(); i++) {
-            getActiveList().get(i).render(batch, font18);
+                getActiveList().get(i).render(batch, font18);
         }
     }
 }

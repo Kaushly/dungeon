@@ -16,7 +16,6 @@ public class GameController {
     private ProjectileController projectileController;
     private UnitController unitController;
     private GameMap gameMap;
-    private GoldController goldController;
 
     private Vector2 mouse;
     private Vector2 pressedMouse;
@@ -31,7 +30,6 @@ public class GameController {
         this.gameMap = new GameMap();
         this.unitController = new UnitController(this);
         this.projectileController = new ProjectileController();
-        this.goldController = new GoldController(this);
         this.unitController.init(INITIAL_MONSTERS_COUNT);
         this.round = 1;
     }
@@ -52,7 +50,6 @@ public class GameController {
         checkMouse();
         projectileController.update(dt);
         unitController.update(dt);
-        goldController.update(dt);
     }
 
     public void checkMouse() {
