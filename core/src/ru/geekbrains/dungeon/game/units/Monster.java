@@ -1,8 +1,6 @@
 package ru.geekbrains.dungeon.game.units;
 
 import com.badlogic.gdx.math.MathUtils;
-import ru.geekbrains.dungeon.game.Armor;
-import ru.geekbrains.dungeon.game.GameMap;
 import ru.geekbrains.dungeon.game.Weapon;
 import ru.geekbrains.dungeon.helpers.Assets;
 import ru.geekbrains.dungeon.game.GameController;
@@ -10,17 +8,13 @@ import ru.geekbrains.dungeon.helpers.Utils;
 
 public class Monster extends Unit {
     private float aiBrainsImplseTime;
-    private float timeMove = 0.4f;
     private Unit target;
-    private boolean visible;
 
     public Monster(GameController gc) {
         super(gc, 5, 2, 10, "Bomber");
         this.textureHp = Assets.getInstance().getAtlas().findRegion("hp");
         this.stats.hp = -1;
-        this.weapon = new Weapon(Weapon.Type.SWORD, 3, 1);
-        this.armor = new Armor(Armor.Type.ANTISWORD, 2, 1);
-
+        this.weapon = new Weapon(Weapon.Type.SWORD, 2, 1, 1);
     }
 
     public Monster activate(int cellX, int cellY) {
@@ -36,14 +30,11 @@ public class Monster extends Unit {
 
     public void update(float dt) {
         super.update(dt);
-        if(gc.getGameMap().isCellVisible(this.cellX, this.cellY)){
-            timeMove = 0.0f;
-        }
         if (canIMakeAction()) {
             if (isStayStill()) {
                 aiBrainsImplseTime += dt;
             }
-            if (aiBrainsImplseTime > timeMove) {
+            if (aiBrainsImplseTime > 0.4f) {
                 aiBrainsImplseTime = 0.0f;
                 think(dt);
             }
@@ -92,6 +83,6 @@ public class Monster extends Unit {
                 }
             }
         }
-        goTo(bestX, bestY, gc.getGameMap().costCell(bestX, bestY));
+        goTo(bestX, bestY);
     }
 }

@@ -1,5 +1,6 @@
 package ru.geekbrains.dungeon.game.units;
 
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
@@ -53,7 +54,7 @@ public abstract class Unit implements Poolable {
     float movementMaxTime;
     int targetX, targetY;
     Weapon weapon;
-    Armor armor;
+    Armour armour;
 
     float innerTimer;
     StringBuilder stringHelper;
@@ -62,9 +63,21 @@ public abstract class Unit implements Poolable {
     float timePerFrame;
     float walkingTime;
 
+    int getCellCenterX() {
+        return cellX * GameMap.CELL_SIZE + GameMap.CELL_SIZE / 2;
+    }
+
+    int getCellCenterY() {
+        return cellY * GameMap.CELL_SIZE + GameMap.CELL_SIZE / 2;
+    }
+
+    int getCellTopY() {
+        return (cellY + 1) * GameMap.CELL_SIZE;
+    }
+
     public Unit(GameController gc, int cellX, int cellY, int hpMax, String textureName) {
         this.gc = gc;
-        this.stats = new Stats(hpMax, 2, 1, 1, 5, 1, 5);
+        this.stats = new Stats(1, hpMax, 1, 5, 1, 5);
         this.cellX = cellX;
         this.cellY = cellY;
         this.targetX = cellX;
@@ -76,6 +89,7 @@ public abstract class Unit implements Poolable {
         this.gold = MathUtils.random(1, 5);
         this.textures = Assets.getInstance().getAtlas().findRegion(textureName).split(60, 60);
         this.currentDirection = Direction.DOWN;
+        this.armour = gc.getArmourController().getArmourByIndex(0);
     }
 
     public void addGold(int amount) {
@@ -101,6 +115,17 @@ public abstract class Unit implements Poolable {
 
     public boolean takeDamage(Unit source, int amount) {
         stats.hp -= amount;
+        stringHelper.setLength(0);
+        if (amount > 0) {
+            stringHelper.append(-amount);
+        } else {
+            stringHelper.append("Blocked");
+        }
+        Color currentColor = Color.WHITE;
+        if (gc.getUnitController().isItMyTurn(this)) {
+            currentColor = Color.RED;
+        }
+        gc.getInfoController().setup(getCellCenterX(), getCellTopY(), stringHelper, currentColor);
         if (stats.hp <= 0) {
             gc.getUnitController().removeUnitAfterDeath(this);
             gc.getGameMap().generateDrop(cellX, cellY, 1);
@@ -116,11 +141,11 @@ public abstract class Unit implements Poolable {
         return cellY == targetY && cellX == targetX;
     }
 
-    public void goTo(int argCellX, int argCellY, int cost) {
-        if (!gc.getGameMap().isCellPassable(argCellX, argCellY) || !gc.getUnitController().isCellFree(argCellX, argCellY)) {
+    public void goTo(int argCellX, int argCellY) {
+        if (!gc.isCellEmpty(argCellX, argCellY)) {
             return;
         }
-        if (stats.movePoints >= cost && Math.abs(argCellX - cellX) + Math.abs(argCellY - cellY) == 1) {
+        if (stats.movePoints > 0 && Math.abs(argCellX - cellX) + Math.abs(argCellY - cellY) == 1) {
             targetX = argCellX;
             targetY = argCellY;
             currentDirection = Direction.getMoveDirection(cellX, cellY, targetX, targetY);
@@ -135,10 +160,16 @@ public abstract class Unit implements Poolable {
     public void attack(Unit target) {
         currentDirection = Direction.getMoveDirection(cellX, cellY, target.cellX, target.cellY);
         target.takeDamage(this, BattleCalc.attack(this, target));
+
         if (target.canIAttackThisTarget(this, 0)) {
-            this.takeDamage(target, BattleCalc.checkCounterAttack(this, target));
+            boolean shouldICounterAttack = BattleCalc.rollCounterAttack(this, target);
+            if (shouldICounterAttack) {
+                this.takeDamage(target, BattleCalc.checkCounterAttack(this, target));
+            }
         }
         stats.attackPoints--;
+
+        gc.getEffectController().setup(target.getCellCenterX(), target.getCellCenterY(), weapon.getFxIndex());
     }
 
     public void update(float dt) {
@@ -150,7 +181,7 @@ public abstract class Unit implements Poolable {
                 movementTime = 0;
                 cellX = targetX;
                 cellY = targetY;
-                stats.movePoints -= gc.getGameMap().costCell(cellX, cellY);
+                stats.movePoints--;
                 gc.getGameMap().checkAndTakeDrop(this);
             }
         }
@@ -167,36 +198,29 @@ public abstract class Unit implements Poolable {
             py = cellY * GameMap.CELL_SIZE + (targetY - cellY) * (movementTime / movementMaxTime) * GameMap.CELL_SIZE;
         }
 
-        if(gc.getGameMap().isCellVisible(this.cellX, this.cellY)) {
-            int frameIndex = (int) (walkingTime / timePerFrame) % textures[0].length;
-            batch.draw(textures[currentDirection.animationRowIndex][frameIndex], px, py);
-            batch.setColor(0.0f, 0.0f, 0.0f, hpAlpha);
+        int frameIndex = (int) (walkingTime / timePerFrame) % textures[0].length;
+        batch.draw(textures[currentDirection.animationRowIndex][frameIndex], px, py);
+        batch.setColor(0.0f, 0.0f, 0.0f, hpAlpha);
 
-            float barX = px, barY = py + MathUtils.sin(innerTimer * 5.0f) * 2;
-            batch.draw(textureHp, barX + 1, barY + 51, 58, 10);
-            batch.setColor(0.7f, 0.0f, 0.0f, hpAlpha);
-            batch.draw(textureHp, barX + 2, barY + 52, 56, 8);
-            batch.setColor(0.0f, 1.0f, 0.0f, hpAlpha);
-            batch.draw(textureHp, barX + 2, barY + 52, (float) stats.hp / stats.maxHp * 56, 8);
-            batch.setColor(1.0f, 1.0f, 1.0f, hpAlpha);
+        float barX = px, barY = py + MathUtils.sin(innerTimer * 5.0f) * 2;
+        batch.draw(textureHp, barX + 1, barY + 51, 58, 10);
+        batch.setColor(0.7f, 0.0f, 0.0f, hpAlpha);
+        batch.draw(textureHp, barX + 2, barY + 52, 56, 8);
+        batch.setColor(0.0f, 1.0f, 0.0f, hpAlpha);
+        batch.draw(textureHp, barX + 2, barY + 52, (float) stats.hp / stats.maxHp * 56, 8);
+        batch.setColor(1.0f, 1.0f, 1.0f, hpAlpha);
+        stringHelper.setLength(0);
+        stringHelper.append(stats.hp);
+        font18.setColor(1.0f, 1.0f, 1.0f, hpAlpha);
+        font18.draw(batch, stringHelper, barX, barY + 64, 60, 1, false);
+
+        font18.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        if (gc.getUnitController().isItMyTurn(this)) {
             stringHelper.setLength(0);
-            stringHelper.append(stats.hp);
-            font18.setColor(1.0f, 1.0f, 1.0f, hpAlpha);
-            font18.draw(batch, stringHelper, barX, barY + 64, 60, 1, false);
-
-            font18.setColor(1.0f, 1.0f, 1.0f, 1.0f);
-            if (gc.getUnitController().isItMyTurn(this)) {
-                stringHelper.setLength(0);
-                stringHelper.append("MP: ").append(stats.movePoints).append(" AP: ").append(stats.attackPoints);
-                font18.draw(batch, stringHelper, barX, barY + 80, 60, 1, false);
-            }
-            if (this.cellX == gc.getCursorX() && this.cellY == gc.getCursorY()) {
-                stringHelper.setLength(0);
-                stringHelper.append("A: ").append(weapon.getDamage()).append(" D: ").append(stats.defence);
-                font18.draw(batch, stringHelper, barX, barY + 20, 60, 1, false);
-            }
-            batch.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+            stringHelper.append("MP: ").append(stats.movePoints).append(" AP: ").append(stats.attackPoints);
+            font18.draw(batch, stringHelper, barX, barY + 80, 60, 1, false);
         }
+        batch.setColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
 
