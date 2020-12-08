@@ -1,6 +1,7 @@
-package ru.geekbrains.dungeon.game;
+package ru.geekbrains.dungeon.game.units;
 
 import com.badlogic.gdx.math.MathUtils;
+import ru.geekbrains.dungeon.game.Weapon;
 import ru.geekbrains.dungeon.helpers.Assets;
 import ru.geekbrains.dungeon.game.GameController;
 import ru.geekbrains.dungeon.helpers.Utils;
@@ -10,22 +11,21 @@ public class Monster extends Unit {
     private Unit target;
 
     public Monster(GameController gc) {
-        super(gc, 5, 2, 10);
-        this.texture = Assets.getInstance().getAtlas().findRegion("monster");
+        super(gc, 5, 2, 10, "Bomber");
         this.textureHp = Assets.getInstance().getAtlas().findRegion("hp");
-        this.hp = -1;
-
+        this.stats.hp = -1;
+        this.weapon = new Weapon(Weapon.Type.SWORD, 2, 1, 1);
     }
 
-    public void activate(int cellX, int cellY) {
+    public Monster activate(int cellX, int cellY) {
         this.cellX = cellX;
         this.cellY = cellY;
         this.targetX = cellX;
         this.targetY = cellY;
-        this.hpMax = 10;
-        this.hp = hpMax;
-        this.money = MathUtils.random(1,3);
+        this.stats.maxHp = 10;
+        this.stats.fullRestoreHp();
         this.target = gc.getUnitController().getHero();
+        return this;
     }
 
     public void update(float dt) {
@@ -42,12 +42,18 @@ public class Monster extends Unit {
     }
 
     public void think(float dt) {
-        if (canIAttackThisTarget(target)) {
+        if (canIAttackThisTarget(target, 1)) {
             attack(target);
+            if (stats.attackPoints == 0) {
+                stats.resetPoints();
+            }
             return;
         }
+        if (stats.movePoints == 0) {
+            stats.resetPoints();
+        }
         if (amIBlocked()) {
-            turns = 0;
+            stats.resetPoints();
             return;
         }
         if (Utils.getCellsIntDistance(cellX, cellY, target.getCellX(), target.getCellY()) < 5) {
@@ -57,7 +63,7 @@ public class Monster extends Unit {
             do {
                 dx = MathUtils.random(0, gc.getGameMap().getCellsX() - 1);
                 dy = MathUtils.random(0, gc.getGameMap().getCellsY() - 1);
-            } while (!(isCellEmpty(dx, dy) && Utils.isCellsAreNeighbours(cellX, cellY, dx, dy)));
+            } while (!(gc.isCellEmpty(dx, dy) && Utils.isCellsAreNeighbours(cellX, cellY, dx, dy)));
             tryToMove(dx, dy);
         }
     }
@@ -67,7 +73,7 @@ public class Monster extends Unit {
         float bestDst = 10000;
         for (int i = cellX - 1; i <= cellX + 1; i++) {
             for (int j = cellY - 1; j <= cellY + 1; j++) {
-                if (Utils.isCellsAreNeighbours(cellX, cellY, i, j) && isCellEmpty(i, j)) {
+                if (Utils.isCellsAreNeighbours(cellX, cellY, i, j) && gc.isCellEmpty(i, j)) {
                     float dst = Utils.getCellsFloatDistance(preferedX, preferedY, i, j);
                     if (dst < bestDst) {
                         bestDst = dst;
@@ -79,6 +85,4 @@ public class Monster extends Unit {
         }
         goTo(bestX, bestY);
     }
-
-
 }

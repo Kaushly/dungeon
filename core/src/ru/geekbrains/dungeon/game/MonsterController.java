@@ -2,6 +2,7 @@ package ru.geekbrains.dungeon.game;
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import ru.geekbrains.dungeon.game.units.Monster;
 import ru.geekbrains.dungeon.helpers.ObjectPool;
 
 public class MonsterController extends ObjectPool<Monster> {
@@ -16,12 +17,13 @@ public class MonsterController extends ObjectPool<Monster> {
         return new Monster(gc);
     }
 
-    public void activate(int cellX, int cellY) {
-        getActiveElement().activate(cellX, cellY);
+    public Monster activate(int cellX, int cellY) {
+        return getActiveElement().activate(cellX, cellY);
     }
 
     public Monster getMonsterInCell(int cellX, int cellY) {
-        for (Monster m : getActiveList()) {
+        for (int i = 0; i < getActiveList().size(); i++) {
+            Monster m = getActiveList().get(i);
             if (m.getCellX() == cellX && m.getCellY() == cellY) {
                 return m;
             }
@@ -30,15 +32,15 @@ public class MonsterController extends ObjectPool<Monster> {
     }
 
     public void update(float dt) {
-        for (Monster m : getActiveList()) {
-            m.update(dt);
+        for (int i = 0; i < getActiveList().size(); i++) {
+            getActiveList().get(i).update(dt);
         }
         checkPool();
     }
 
     public void render(SpriteBatch batch, BitmapFont font18) {
-        for (Monster m : getActiveList()) {
-            m.render(batch, font18);
+        for (int i = 0; i < getActiveList().size(); i++) {
+            getActiveList().get(i).render(batch, font18);
         }
     }
 }
